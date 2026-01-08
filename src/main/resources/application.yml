@@ -17,4 +17,14 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+sendgrid:
+  api:
+    key: test-sendgrid-api-key-for-testing
+  from:
+    email: noreply@test.com
+    name: Expense Tracker
+
+otp:
+  expire-in-minute: 3
+
 

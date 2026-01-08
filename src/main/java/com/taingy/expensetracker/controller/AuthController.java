@@ -2,6 +2,7 @@ package com.taingy.expensetracker.controller;
 
 import com.taingy.expensetracker.dto.*;
 import com.taingy.expensetracker.service.AuthService;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,4 +32,17 @@ public class AuthController {
         ResponseMessage registerResponse = authService.register(request);
         return ResponseEntity.ok(registerResponse);
     }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<AuthResponse> verifyOtp(@RequestBody VerifyOtpRequest request) throws BadRequestException {
+        AuthResponse authResponse = authService.verifyOtpCode(request);
+        return ResponseEntity.ok(authResponse);
+    }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<ResponseMessage> resendOtp(@RequestBody ResendOtpRequest request) throws BadRequestException {
+        ResponseMessage response = authService.resendOtp(request);
+        return ResponseEntity.ok(response);
+    }
+
 }

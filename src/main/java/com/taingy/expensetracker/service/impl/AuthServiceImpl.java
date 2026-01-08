@@ -8,9 +8,14 @@ import com.taingy.expensetracker.repository.RoleRepository;
 import com.taingy.expensetracker.repository.UserRepository;
 import com.taingy.expensetracker.security.JwtUtil;
 import com.taingy.expensetracker.service.AuthService;
+import com.taingy.expensetracker.service.OtpService;
+import com.taingy.expensetracker.service.EmailService;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -20,14 +25,18 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
     private final RoleRepository roleRepository;
+    private final EmailService emailService;
+    private final OtpService otpService;
 
     @Autowired
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, UserMapper userMapper, RoleRepository roleRepository) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, UserMapper userMapper, RoleRepository roleRepository, EmailService emailService, OtpService otpService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.userMapper = userMapper;
         this.roleRepository = roleRepository;
+        this.emailService = emailService;
+        this.otpService = otpService;
     }
 
     @Override
@@ -55,14 +64,50 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setIsVerified(true);
+        user.setIsVerified(false);
 
         Role role = roleRepository.findByName("USER").get();
         user.setRole(role);
         userRepository.save(user);
 
+        String otpCode = otpService.generateOtp(request.getEmail());
+        emailService.sendOtpEmail(request.getEmail(), otpCode, request.getFirstName());
+
         return new ResponseMessage(
                 "Registration successful. Please check your email for the verification code."
         );
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse verifyOtpCode(VerifyOtpRequest request) throws BadRequestException {
+        boolean isValid = otpService.verifyOtp(request.email(), request.otp());
+        if (!isValid) {
+            throw new BadRequestException("Invalid or expired OTP code");
+        }
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        user.setIsVerified(true);
+        userRepository.save(user);
+
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().getName());
+        return new AuthResponse(token, userMapper.toDto(user));
+    }
+
+    @Override
+    public ResponseMessage resendOtp(ResendOtpRequest request) throws BadRequestException {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (user.getIsVerified()) {
+            throw new BadRequestException("Email is already verified");
+        }
+
+        String otpCode = otpService.generateOtp(request.email());
+        emailService.sendOtpEmail(request.email(), otpCode, user.getFirstName());
+
+        return new ResponseMessage("A new verification code has been sent to your email.");
     }
 }

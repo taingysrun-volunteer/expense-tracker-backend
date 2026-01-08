@@ -21,6 +21,7 @@ public class ExpenseSummary {
     private BigDecimal minAmount;
     private List<CategorySummary> categoryBreakdown;
     private List<MonthlySummary> monthlyBreakdown;
+    private List<UserSummary> userBreakdown; // Only populated for ADMIN role
 
     @Data
     @Builder
@@ -41,5 +42,17 @@ public class ExpenseSummary {
         private String month;
         private BigDecimal totalAmount;
         private Long count;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserSummary {
+        private String userName;
+        private String userEmail;
+        private BigDecimal totalAmount;
+        private Long count;
+        private Double percentage;
     }
 }

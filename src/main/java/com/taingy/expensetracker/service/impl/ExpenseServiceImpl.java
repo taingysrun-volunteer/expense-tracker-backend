@@ -88,6 +88,9 @@ public class ExpenseServiceImpl implements ExpenseService {
         if (request.getDescription() != null) {
             expense.setDescription(request.getDescription());
         }
+        if (request.getExpenseDate() != null) {
+            expense.setExpenseDate(request.getExpenseDate());
+        }
         Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
         expense.setCategory(category);
         expense = expenseRepository.save(expense);
@@ -110,13 +113,33 @@ public class ExpenseServiceImpl implements ExpenseService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + userEmail));
 
         UUID userId = user.getId();
+        String roleName = user.getRole().getName();
 
-        // Get basic statistics
-        BigDecimal totalAmount = expenseRepository.getTotalAmountByUserId(userId);
-        Long totalCount = expenseRepository.getCountByUserId(userId);
-        BigDecimal averageAmount = expenseRepository.getAverageAmountByUserId(userId);
-        BigDecimal maxAmount = expenseRepository.getMaxAmountByUserId(userId);
-        BigDecimal minAmount = expenseRepository.getMinAmountByUserId(userId);
+        // Get basic statistics based on role
+        BigDecimal totalAmount;
+        Long totalCount;
+        BigDecimal averageAmount;
+        BigDecimal maxAmount;
+        BigDecimal minAmount;
+        List<Expense> allExpenses;
+
+        if ("ADMIN".equals(roleName)) {
+            // Admin gets all expenses across all users
+            totalAmount = expenseRepository.getTotalAmount();
+            totalCount = expenseRepository.count();
+            averageAmount = expenseRepository.getAverageAmount();
+            maxAmount = expenseRepository.getMaxAmount();
+            minAmount = expenseRepository.getMinAmount();
+            allExpenses = expenseRepository.findAll();
+        } else {
+            // Regular users get only their expenses
+            totalAmount = expenseRepository.getTotalAmountByUserId(userId);
+            totalCount = expenseRepository.getCountByUserId(userId);
+            averageAmount = expenseRepository.getAverageAmountByUserId(userId);
+            maxAmount = expenseRepository.getMaxAmountByUserId(userId);
+            minAmount = expenseRepository.getMinAmountByUserId(userId);
+            allExpenses = expenseRepository.findAllByUserId(userId);
+        }
 
         // Handle null values (when no expenses exist)
         totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO;
@@ -125,14 +148,17 @@ public class ExpenseServiceImpl implements ExpenseService {
         maxAmount = maxAmount != null ? maxAmount : BigDecimal.ZERO;
         minAmount = minAmount != null ? minAmount : BigDecimal.ZERO;
 
-        // Get all expenses for breakdown calculations
-        List<Expense> allExpenses = expenseRepository.findAllByUserId(userId);
-
         // Calculate category breakdown
         List<ExpenseSummary.CategorySummary> categoryBreakdown = calculateCategoryBreakdown(allExpenses, totalAmount);
 
         // Calculate monthly breakdown
         List<ExpenseSummary.MonthlySummary> monthlyBreakdown = calculateMonthlyBreakdown(allExpenses);
+
+        // Calculate user breakdown (only for admins)
+        List<ExpenseSummary.UserSummary> userBreakdown = null;
+        if ("ADMIN".equals(roleName)) {
+            userBreakdown = calculateUserBreakdown(allExpenses, totalAmount);
+        }
 
         return ExpenseSummary.builder()
                 .totalAmount(totalAmount)
@@ -142,6 +168,7 @@ public class ExpenseServiceImpl implements ExpenseService {
                 .minAmount(minAmount)
                 .categoryBreakdown(categoryBreakdown)
                 .monthlyBreakdown(monthlyBreakdown)
+                .userBreakdown(userBreakdown)
                 .build();
     }
 
@@ -201,6 +228,39 @@ public class ExpenseServiceImpl implements ExpenseService {
                             .build();
                 })
                 .sorted(Comparator.comparing(ExpenseSummary.MonthlySummary::getMonth).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private List<ExpenseSummary.UserSummary> calculateUserBreakdown(List<Expense> expenses, BigDecimal totalAmount) {
+        Map<User, List<Expense>> groupedByUser = expenses.stream()
+                .collect(Collectors.groupingBy(Expense::getUser));
+
+        return groupedByUser.entrySet().stream()
+                .map(entry -> {
+                    User user = entry.getKey();
+                    List<Expense> userExpenses = entry.getValue();
+
+                    BigDecimal userTotal = userExpenses.stream()
+                            .map(Expense::getAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    long count = userExpenses.size();
+
+                    double percentage = totalAmount.compareTo(BigDecimal.ZERO) > 0
+                            ? userTotal.divide(totalAmount, 4, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100))
+                            .doubleValue()
+                            : 0.0;
+
+                    return ExpenseSummary.UserSummary.builder()
+                            .userName(user.getFirstName() + " " + user.getLastName())
+                            .userEmail(user.getEmail())
+                            .totalAmount(userTotal)
+                            .count(count)
+                            .percentage(percentage)
+                            .build();
+                })
+                .sorted(Comparator.comparing(ExpenseSummary.UserSummary::getTotalAmount).reversed())
                 .collect(Collectors.toList());
     }
 }

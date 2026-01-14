@@ -17,4 +17,5 @@ public interface UserService {
     UserResponse createUser(UserRequest userRequest);
     void deactivateUser(UUID id);
     void deleteUser(UUID id);
+    void resetPassword(UUID userId, String newPassword);
 }

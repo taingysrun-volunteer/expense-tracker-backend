@@ -82,4 +82,14 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(UUID id) {
         userRepository.findById(id).ifPresent(userRepository::delete);
     }
+
+    @Override
+    @Transactional
+    public void resetPassword(UUID userId, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }

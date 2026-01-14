@@ -108,45 +108,57 @@ public class ExpenseServiceImpl implements ExpenseService {
     }
 
     @Override
-    public ExpenseSummary getSummary(String userEmail) {
+    public ExpenseSummary getSummary(String userEmail, UUID categoryId, String month) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + userEmail));
 
         UUID userId = user.getId();
         String roleName = user.getRole().getName();
 
-        // Get basic statistics based on role
-        BigDecimal totalAmount;
-        Long totalCount;
-        BigDecimal averageAmount;
-        BigDecimal maxAmount;
-        BigDecimal minAmount;
+        // Get all expenses based on role
         List<Expense> allExpenses;
-
         if ("ADMIN".equals(roleName)) {
             // Admin gets all expenses across all users
-            totalAmount = expenseRepository.getTotalAmount();
-            totalCount = expenseRepository.count();
-            averageAmount = expenseRepository.getAverageAmount();
-            maxAmount = expenseRepository.getMaxAmount();
-            minAmount = expenseRepository.getMinAmount();
             allExpenses = expenseRepository.findAll();
         } else {
             // Regular users get only their expenses
-            totalAmount = expenseRepository.getTotalAmountByUserId(userId);
-            totalCount = expenseRepository.getCountByUserId(userId);
-            averageAmount = expenseRepository.getAverageAmountByUserId(userId);
-            maxAmount = expenseRepository.getMaxAmountByUserId(userId);
-            minAmount = expenseRepository.getMinAmountByUserId(userId);
             allExpenses = expenseRepository.findAllByUserId(userId);
         }
 
-        // Handle null values (when no expenses exist)
-        totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO;
-        totalCount = totalCount != null ? totalCount : 0L;
-        averageAmount = averageAmount != null ? averageAmount : BigDecimal.ZERO;
-        maxAmount = maxAmount != null ? maxAmount : BigDecimal.ZERO;
-        minAmount = minAmount != null ? minAmount : BigDecimal.ZERO;
+        // Apply filters if provided
+        if (categoryId != null) {
+            allExpenses = allExpenses.stream()
+                    .filter(expense -> expense.getCategory() != null && expense.getCategory().getId().equals(categoryId))
+                    .collect(Collectors.toList());
+        }
+
+        if (month != null && !month.isEmpty()) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            allExpenses = allExpenses.stream()
+                    .filter(expense -> expense.getExpenseDate().format(formatter).equals(month))
+                    .collect(Collectors.toList());
+        }
+
+        // Calculate statistics from filtered expenses
+        BigDecimal totalAmount = allExpenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Long totalCount = (long) allExpenses.size();
+
+        BigDecimal averageAmount = totalCount > 0
+                ? totalAmount.divide(BigDecimal.valueOf(totalCount), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        BigDecimal maxAmount = allExpenses.stream()
+                .map(Expense::getAmount)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
+
+        BigDecimal minAmount = allExpenses.stream()
+                .map(Expense::getAmount)
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
 
         // Calculate category breakdown
         List<ExpenseSummary.CategorySummary> categoryBreakdown = calculateCategoryBreakdown(allExpenses, totalAmount);

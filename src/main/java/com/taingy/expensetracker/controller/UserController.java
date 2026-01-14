@@ -1,5 +1,6 @@
 package com.taingy.expensetracker.controller;
 
+import com.taingy.expensetracker.dto.ResetPasswordRequest;
 import com.taingy.expensetracker.dto.ResponseMessage;
 import com.taingy.expensetracker.dto.UserRequest;
 import com.taingy.expensetracker.dto.UserResponse;
@@ -11,8 +12,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -68,6 +72,7 @@ public class UserController {
         return ResponseEntity.ok(userMapper.toDto(user));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseMessage> deleteUser(@PathVariable UUID id) {
         User user = userService.getUserById(id).orElseThrow(
@@ -76,5 +81,19 @@ public class UserController {
         userService.deleteUser(user.getId());
 
         return ResponseEntity.ok(new ResponseMessage("Successfully deleted User with id " + id));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/reset-password")
+    public ResponseEntity<ResponseMessage> resetPassword(
+            @PathVariable UUID id,
+            @RequestBody ResetPasswordRequest request) {
+
+        userService.getUserById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
+
+        userService.resetPassword(id, request.getNewPassword());
+
+        return ResponseEntity.ok(new ResponseMessage("Password successfully reset for user with id " + id));
     }
 }

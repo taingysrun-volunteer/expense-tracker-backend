@@ -146,10 +146,12 @@ public class ExpenseController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<ExpenseSummary> getSummary() {
+    public ResponseEntity<ExpenseSummary> getSummary(
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) String month) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
-        ExpenseSummary summary = expenseService.getSummary(userEmail);
+        ExpenseSummary summary = expenseService.getSummary(userEmail, categoryId, month);
         return ResponseEntity.ok(summary);
     }
 

@@ -20,6 +20,6 @@ public interface ExpenseService {
     ExpenseResponse create(ExpenseRequest request, String userEmail);
     ExpenseResponse update(UUID id, ExpenseRequest request);
     void delete(UUID id);
-    ExpenseSummary getSummary(String userEmail);
+    ExpenseSummary getSummary(String userEmail, UUID categoryId, String month);
 
 }

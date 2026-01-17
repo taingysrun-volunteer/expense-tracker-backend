@@ -66,10 +66,8 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable UUID id, @RequestBody UserRequest userRequest) {
-        User user = userService.getUserById(id).orElseThrow(
-                () -> new IllegalArgumentException("User with id " + id + " not found"));
-
-        return ResponseEntity.ok(userMapper.toDto(user));
+        UserResponse response = userService.updateUser(id, userRequest);
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

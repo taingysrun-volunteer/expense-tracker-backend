@@ -15,6 +15,7 @@ public interface UserService {
     UserResponse getUserByEmail(String email);
     Page<UserResponse> findUsersWithFilters(String searchTerm, UUID roleId, Boolean isActive, Boolean isVerified, Pageable pageable);
     UserResponse createUser(UserRequest userRequest);
+    UserResponse updateUser(UUID id, UserRequest userRequest);
     void deactivateUser(UUID id);
     void deleteUser(UUID id);
     void resetPassword(UUID userId, String newPassword);

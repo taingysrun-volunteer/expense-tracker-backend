@@ -9,9 +9,10 @@ spring:
     active: dev
 
   datasource:
-    url:
-    username:
-    password:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -22,12 +23,20 @@ spring:
 
 sendgrid:
   api:
-    key: test-sendgrid-api-key-for-testing
+    key: ${SENDGRID_API_KEY}
   from:
-    email: noreply@test.com
+    email: ${SENDGRID_EMAIL}
     name: Expense Tracker
 
 otp:
   expire-in-minute: 3
+
+app:
+  name: Expense Tracker
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION_IN_MS}
+
+FRONTEND_URLS: ${FRONTEND_URLS}
 
 

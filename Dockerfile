@@ -2,19 +2,19 @@
 FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 
-# Copy only Gradle files first (better caching)
+# Copy Gradle wrapper + configs first
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle settings.gradle ./
 
-# Download dependencies
-RUN ./gradlew dependencies --no-daemon
+# Warm up dependency cache (ONLY ONCE)
+RUN ./gradlew build --no-daemon -x test || true
 
-# Copy the rest of the source
+# Copy source code last
 COPY src src
 
-# Build jar (skip tests)
-RUN ./gradlew clean bootJar --no-daemon -x test
+# Build jar (incremental, cached)
+RUN ./gradlew bootJar --no-daemon -x test --parallel --build-cache
 
 # ---------- Runtime stage ----------
 FROM eclipse-temurin:17-jdk-alpine

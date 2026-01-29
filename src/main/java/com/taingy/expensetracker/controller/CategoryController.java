@@ -7,6 +7,7 @@ import com.taingy.expensetracker.dto.ResponseMessage;
 import com.taingy.expensetracker.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,6 +45,7 @@ public class CategoryController {
 
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponse> updaetCategory(@PathVariable UUID id, @RequestBody CategoryRequest categoryRequest) {
         CategoryResponse categoryResponse = categoryService.update(id, categoryRequest);
@@ -51,6 +53,7 @@ public class CategoryController {
 
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseMessage> deleteCategory(@PathVariable UUID id) {
         categoryService.delete(id);

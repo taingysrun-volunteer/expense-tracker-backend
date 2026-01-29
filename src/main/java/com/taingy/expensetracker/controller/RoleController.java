@@ -4,6 +4,7 @@ import com.taingy.expensetracker.dto.ListResponse;
 import com.taingy.expensetracker.model.Role;
 import com.taingy.expensetracker.service.RoleService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,7 @@ public class RoleController {
         this.roleService = roleService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<ListResponse<Role>> getRoles() {
         List<Role> roles = roleService.getAllRoles();

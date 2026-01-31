@@ -10,21 +10,13 @@ public class AuditLogMapper {
     public AuditLogResponse toDto(AuditLog auditLog) {
         if (auditLog == null) return null;
 
-        String userName = null;
-        if (auditLog.getUser() != null) {
-            userName = auditLog.getUser().getFirstName() + " " + auditLog.getUser().getLastName();
-        }
-
         return AuditLogResponse.builder()
                 .id(auditLog.getId())
-                .action(auditLog.getAction())
-                .entityType(auditLog.getEntityType())
-                .entityId(auditLog.getEntityId())
-                .userEmail(auditLog.getUserEmail())
-                .userName(userName)
-                .details(auditLog.getDetails())
+                .method(auditLog.getMethod())
+                .endpoint(auditLog.getEndpoint())
+                .userName(auditLog.getUsername())
+                .details(auditLog.getRequestBody())
                 .ipAddress(auditLog.getIpAddress())
-                .userAgent(auditLog.getUserAgent())
                 .success(auditLog.getSuccess())
                 .errorMessage(auditLog.getErrorMessage())
                 .createdAt(auditLog.getCreatedAt())

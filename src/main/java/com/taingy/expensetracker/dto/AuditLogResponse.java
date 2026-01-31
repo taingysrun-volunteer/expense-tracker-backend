@@ -15,14 +15,11 @@ import java.util.UUID;
 public class AuditLogResponse {
 
     private UUID id;
-    private String action;
-    private String entityType;
-    private String entityId;
-    private String userEmail;
+    private String method;
+    private String endpoint;
     private String userName;
     private String details;
     private String ipAddress;
-    private String userAgent;
     private Boolean success;
     private String errorMessage;
     private LocalDateTime createdAt;

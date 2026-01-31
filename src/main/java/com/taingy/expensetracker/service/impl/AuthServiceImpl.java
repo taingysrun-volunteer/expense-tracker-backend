@@ -1,5 +1,6 @@
 package com.taingy.expensetracker.service.impl;
 
+import com.taingy.expensetracker.enums.Roles;
 import com.taingy.expensetracker.dto.*;
 import com.taingy.expensetracker.mapper.UserMapper;
 import com.taingy.expensetracker.model.Role;
@@ -66,7 +67,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setIsVerified(false);
 
-        Role role = roleRepository.findByName("USER").get();
+        Role role = roleRepository.findByName(Roles.USER.name()).get();
         user.setRole(role);
         userRepository.save(user);
 

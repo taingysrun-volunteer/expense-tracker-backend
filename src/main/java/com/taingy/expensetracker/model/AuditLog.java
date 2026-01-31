@@ -23,29 +23,19 @@ public class AuditLog {
     private UUID id;
 
     @Column(nullable = false, length = 50)
-    private String action;
+    private String method;
 
-    @Column(nullable = false, length = 50)
-    private String entityType;
-
-    @Column(length = 100)
-    private String entityId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(nullable = false)
+    private String endpoint;
 
     @Column(length = 100)
-    private String userEmail;
+    private String username;
 
     @Column(columnDefinition = "TEXT")
-    private String details;
+    private String requestBody;
 
     @Column(length = 45)
     private String ipAddress;
-
-    @Column(length = 255)
-    private String userAgent;
 
     @Column(nullable = false)
     @Builder.Default
@@ -53,6 +43,12 @@ public class AuditLog {
 
     @Column(length = 500)
     private String errorMessage;
+
+    @Column
+    private int status;
+
+    @Column
+    private long executionTimeMs;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

@@ -1,5 +1,6 @@
 package com.taingy.expensetracker.service.impl;
 
+import com.taingy.expensetracker.enums.Roles;
 import com.taingy.expensetracker.dto.ExpenseRequest;
 import com.taingy.expensetracker.dto.ExpenseResponse;
 import com.taingy.expensetracker.dto.ExpenseSummary;
@@ -117,7 +118,7 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         // Get all expenses based on role
         List<Expense> allExpenses;
-        if ("ADMIN".equals(roleName)) {
+        if (Roles.ADMIN.name().equals(roleName)) {
             // Admin gets all expenses across all users
             allExpenses = expenseRepository.findAll();
         } else {
@@ -168,7 +169,7 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         // Calculate user breakdown (only for admins)
         List<ExpenseSummary.UserSummary> userBreakdown = null;
-        if ("ADMIN".equals(roleName)) {
+        if (Roles.ADMIN.name().equals(roleName)) {
             userBreakdown = calculateUserBreakdown(allExpenses, totalAmount);
         }
 

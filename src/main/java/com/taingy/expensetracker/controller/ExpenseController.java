@@ -1,5 +1,6 @@
 package com.taingy.expensetracker.controller;
 
+import com.taingy.expensetracker.enums.Roles;
 import com.taingy.expensetracker.dto.ExpenseRequest;
 import com.taingy.expensetracker.dto.ExpenseResponse;
 import com.taingy.expensetracker.dto.ExpenseSummary;
@@ -60,7 +61,7 @@ public class ExpenseController {
 
         // If user has USER role, restrict to their own expenses only
         UUID effectiveUserId = userId;
-        if ("USER".equals(currentUser.getRole().getName())) {
+        if (Roles.USER.name().equals(currentUser.getRole().getName())) {
             effectiveUserId = currentUser.getId();
         }
 
@@ -86,7 +87,7 @@ public class ExpenseController {
         }
 
         // If user has USER role, verify they own this expense
-        if ("USER".equals(currentUser.getRole().getName()) && !expenseResponse.getUserId().equals(currentUser.getId())) {
+        if (Roles.USER.name().equals(currentUser.getRole().getName()) && !expenseResponse.getUserId().equals(currentUser.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
@@ -115,7 +116,7 @@ public class ExpenseController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found");
         }
 
-        if ("USER".equals(currentUser.getRole().getName()) && !existingExpense.getUserId().equals(currentUser.getId())) {
+        if (Roles.USER.name().equals(currentUser.getRole().getName()) && !existingExpense.getUserId().equals(currentUser.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
@@ -137,7 +138,7 @@ public class ExpenseController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found");
         }
 
-        if ("USER".equals(currentUser.getRole().getName()) && !existingExpense.getUserId().equals(currentUser.getId())) {
+        if (Roles.USER.name().equals(currentUser.getRole().getName()) && !existingExpense.getUserId().equals(currentUser.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
